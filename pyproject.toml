@@ -1,0 +1,17 @@
+[project]
+name = "mcp-server-mysql"
+version = "0.1.0"
+description = "MCP server for MySQL databases."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.9.4",
+    "mysql-connector-python>=9.2.0",
+]
+
+[[project.authors]]
+name = "Amit Singh"
+email = "write.amitsingh@gmail.com"
+
+[project.scripts]
+mcp-server-mysql="mcp-server-mysql:main"
