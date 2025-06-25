@@ -143,7 +143,7 @@ async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
         return [types.TextContent(type="text", text=f"Unknown tool: {name}")]
 
     if not arguments["query"]:
-        return [types.TextConten(type="text", text=f"ERROR: Query is required")]
+        return [types.TextContent(type="text", text=f"ERROR: Query is required")]
 
     query = arguments["query"]
     conn = connect_to_mysql()
