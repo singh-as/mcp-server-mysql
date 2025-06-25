@@ -14,13 +14,17 @@ config = {
     'host': os.getenv('MYSQL_HOST', 'localhost'),
     'port': int(os.getenv('MYSQL_PORT', 3306)),
     'user': os.getenv('MYSQL'),
-    'password': os.getenv('MYSQL_PASSWORD')
+    'password': os.getenv('MYSQL_PASSWORD'),
+    'database': os.getenv('MYSQL_DATABASE')
 }
 
+## remove None values from config
+config = {key: value for key, value in config.items() if value is not None}
+log.info(config)
 app = Server("mcp-server-mysql")
 
 def connect_to_mysql():
-    """Connect to MySQL database."""
+    "Connect to MySQL database."
     try:
         log.info("Connecting to MySQL")
         conn = connect(**config)
@@ -37,19 +41,17 @@ def connect_to_mysql():
 
 @app.list_resources()
 async def list_resources() -> list[types.Resource]:
-    """List MySQL schemas as resources."""
-    resources = []
+    "List MySQL schemas as resources."
 
+    resources = []
     conn = connect_to_mysql()
 
     try:
-        log.info("List resources")
         
         if conn and conn.is_connected():    
             with conn.cursor() as cursor:
                 cursor.execute("SHOW DATABASES")
                 schemas = cursor.fetchall()
-
                 log.info(f"Found {len(schemas)-4} schemas in MySQL database.")
                 
                 for schema in schemas:
@@ -73,10 +75,11 @@ async def list_resources() -> list[types.Resource]:
 
 @app.read_resource()
 async def read_resource(uri: AnyUrl) -> str:
+    "Read a MySQL schema resource and return its description."
     log.info(f"Reading resource: {uri}")
     
     tokens = str(uri).split('/')
-    if len(tokens) < 5 or tokens[4] != "describe":
+    if len(tokens) < 5 or f"mysql://databse/{tokens[3]}/describe" == uri.serialize_url:
         raise ValueError(f"Invalid URI format: {uri}")
 
     schema_name = tokens[3]
@@ -97,8 +100,16 @@ async def read_resource(uri: AnyUrl) -> str:
             if not tables:
                 return f"No tables found in schema: {schema_name}"
             
-            return f"{schema_name} schema has {len(tables)} tables. They are: {', '.join([table[1] for table in tables])}. You can use the 'describe' command to get more information about each table."
+            schema_table_info = f"{schema_name} schema has {len(tables)} tables. They are: {', '.join([table[1] for table in tables])}. You can use the 'describe' command to get more information about each table."
         
+            for table in tables:
+                cursor.execute(f"SHOW CREATE TABLE {schema_name}.{table[1]}")
+                columns = cursor.fetchall()
+                schema_table_info += f"\n\nTable: {table[1]}\n"
+                schema_table_info += "\n".join([f"{col[0]} ({col[1]})" for col in columns])
+
+            return schema_table_info
+
     except Error as err:
         log.error(f"Error occured: {str(err)}, code: {err.errno}, SQL state: {err.sqlstate}")
         raise RuntimeError(f"Database error: {str(err)}")
@@ -108,6 +119,7 @@ async def read_resource(uri: AnyUrl) -> str:
 
 @app.list_tools()
 async def list_tools() -> list[types.Tool]:
+    "List available tools for LLM."
     return [
         types.Tool(
             name="execute_sql",
@@ -125,11 +137,12 @@ async def list_tools() -> list[types.Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent]:
+    "Execute an SQL query using the specified tool."
 
     if name != "execute_sql":
         return [types.TextContent(type="text", text=f"Unknown tool: {name}")]
 
-    if not arguments.get("query"):
+    if not arguments["query"]:
         return [types.TextConten(type="text", text=f"ERROR: Query is required")]
 
     query = arguments["query"]
