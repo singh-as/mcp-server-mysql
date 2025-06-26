@@ -22,7 +22,9 @@
    uv run mcp-server-mysql
    ```  
 
-#### Development/Unpublished Configuration
+## Usage
+### With Claude Desktop or Visual Studio Code
+Add this to your `claude_desktop_config.json` or `mcp.json`:
 
 ```json
 {
