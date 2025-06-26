@@ -13,14 +13,10 @@
 3. **Set Up Virtual Environment and Install Dependencies:**  
    ```bash
    uv venv
-   source venv/bin/activate
+   source .venv/bin/activate
    pip install -e .
    ```
 
-4. **Run the Server:**  
-   ```bash
-   uv run mcp-server-mysql
-   ```  
 
 ## Usage
 ### With Claude Desktop or Visual Studio Code
@@ -33,10 +29,17 @@ Add this to your `claude_desktop_config.json` or `mcp.json`:
       "command": "uv",
       "args": [
         "--directory",
-        "/path/to/git-clone/folder", 
+        "/path/to/gitclone/folder", 
         "run",
         "mcp-server-mysql"
-      ]
+      ],
+      "env": {
+            "MYSQL_HOST": "localhost",
+            "MYSQL_PORT": "3306",
+            "MYSQL_USER": "",
+            "MYSQL_PASSWORD": "",
+            "MYSQL_DATABASE": ""
+      }
     }
   }
 }
