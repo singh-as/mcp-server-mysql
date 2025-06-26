@@ -22,6 +22,7 @@ config = {
 config = {key: value for key, value in config.items() if value is not None}
 log.info(config)
 app = Server("mcp-server-mysql")
+log.info("Starting mcp-server-mysql...")
 
 def connect_to_mysql():
     "Connect to MySQL database."
